@@ -1,6 +1,6 @@
 # HaLViT: Half of the Weights are Enough
 
-This repository contains the introduction and implementation details for the paper **"HaLViT: Half of the Weights are Enough"**, published at the **CVPR 2024 Workshop** (Open Access version provided by the Computer Vision Foundation).
+This repository contains the introduction and implementation details for the paper **"HaLViT: Half of the Weights are Enough"**, published at the **CVPR 2024 Workshop**.
 
 ## Authors and Affiliation
 
