@@ -19,7 +19,7 @@ Instead of using two separate weight matrices ($W_1$ and $W_2$) for consecutive 
 
 ## Method
 
-The method applies this weight-sharing strategy to both Vision Transformers and Convolutional Neural Networks.
+The method applies this weight-sharing strategy to both **Vision Transformers** and **Convolutional Neural Networks**.
 
 ## Acknowledgments
 
