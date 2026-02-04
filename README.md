@@ -14,6 +14,11 @@ This repository contains the introduction and implementation details for the pap
 
 **Contact:** `{okoyun, toreyin}@itu.edu.tr`
 
+## Web
+
+https://spacing.itu.edu.tr/halvit.html
+https://openaccess.thecvf.com/content/CVPR2024W/ELVM/html/Koyun_HaLViT_Half_of_the_Weights_are_Enough_CVPRW_2024_paper.html
+
 ## Introduction
 
 Deep learning models like Transformers and CNNs typically use separate weight matrices for consecutive linear transformations, resulting in a large number of parameters.
