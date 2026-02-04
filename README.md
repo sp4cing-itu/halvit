@@ -1,61 +1,100 @@
 # HaLViT: Half of the Weights are Enough
 
-**CVPR Workshop Paper - Open Access**
-
-This repository contains the summary and introduction of the paper "HaLViT: Half of the Weights are Enough," which was accepted and published as a CVPR Workshop paper.
-
-## General Overview
-
-Deep learning architectures, such as Transformers and Convolutional Neural Networks (CNNs), have led to groundbreaking advances across numerous fields. However, their extensive need for parameters poses challenges for implementation in environments with limited resources, such as mobile devices or edge computing platforms.
-
-In this research, we propose a strategy that focuses on the utilization of the column and row spaces of weight matrices. This approach significantly reduces the number of required model parameters without substantially affecting performance. The technique is applied to both Bottleneck layers (in ResNets) and Attention layers (in Vision Transformers), achieving a notable reduction in parameters with minimal impact on model efficacy.
-
-## Method Application
-
-The main idea behind our method is simple: **Reuse the weights.**
-
-In standard deep learning models, layers typically use separate, distinct weight matrices for every step. We discovered that we can use a single weight matrix ($W$) for the first operation, and then reuse its transpose ($W^T$) for the subsequent operation. Because these steps are separated by a non-linear activation function, the model learns effectively while cutting the number of parameters in half.
-
-### HaLViT Transformer
-We apply this "recycling" logic to the two most parameter-heavy parts of a Vision Transformer:
-
-* **Feed Forward Network (FFN):** A standard FFN normally requires two separate big matrices (one to expand the features, one to reduce them back). We replace these with just **one matrix**. We use $W$ to expand, and reuse $W^T$ to reduce.
-* **Multi-Head Attention (MHA):** We merge the weights used for attention. Instead of separate matrices for everything, Keys and Values share a single matrix ($W_{kv}$). Queries use a separate matrix ($W_q$), but we reuse $W_q$ (transposed) again for the final output projection.
-
-### HaLViT CNN (ResNet)
-We apply the same concept to Convolutional Neural Networks, specifically the "Bottleneck" blocks in ResNet:
-
-* **Reusing Weights:** Inside a bottleneck block, we use matrix $W$ for the first convolution layer and $W^T$ for the last convolution layer.
-* **Sharing Across Blocks:** We adopt a strategy of weight sharing where the same set of parameters is reused across multiple bottleneck blocks within the same stage of the network to decrease the parameter count.
+This repository contains the introduction and implementation details for the paper **"HaLViT: Half of the Weights are Enough"**, published at the **CVPR 2024 Workshop** (Open Access version provided by the Computer Vision Foundation).
 
 ## Authors and Affiliation
 
-* **Authors:** Onur Can Koyun, Behçet Uğur Töreyin
-* **Affiliation:** Informatics Institute, Signal Processing for Computational Intelligence Research Group (SP4CING), Dept. of Artificial Intelligence and Data Engineering, İstanbul Technical University, İstanbul, Türkiye
+**Authors:** Onur Can Koyun, Behçet Uğur Töreyin
 
-## Key Contributions and Results
+**Affiliation:**
+* Istanbul Technical University (ITU), Türkiye
+* Informatics Institute
+* Signal Processing for Computational Intelligence Research Group (SP4CING)
+* Dept. of Artificial Intelligence and Data Engineering
 
-* **Parameter Efficiency:** The primary contribution of this approach lies in its ability to offer a parameter-efficient solution for deep learning models. It effectively reduces the parameter count of Vision Transformers (ViTs) and ResNets by approximately half.
-* **Method Application:** The method leverages the column and row spaces of weight matrices to independently utilize them in each layer. It reuses the single weight matrix and its transpose for projection and back-projection tasks, separated by nonlinear activation functions.
-* **Performance:**
-    * **ImageNet Classification:** HaLViT-Tiny achieved a top-1 accuracy of 78.8% with only 11.1M parameters. HaLViT-M attained a top-1 accuracy of 81.3% with 43.0M parameters. These results are competitive with or superior to other efficient models like PVT and DeiT.
-    * **Object Detection (COCO):** When integrated with Mask R-CNN, HaLViT-M (63.0M parameters) demonstrated superior performance metrics compared to models like PVT-M and ResNet101.
+**Contact:** `{okoyun, toreyin}@itu.edu.tr`
+
+## Introduction
+
+Deep learning models like Transformers and CNNs typically use separate weight matrices for consecutive linear transformations, resulting in a large number of parameters.
+
+**HaLViT** reduces the number of parameters by **reusing the same weight matrix** for two different operations within a layer. Instead of using two distinct matrices (e.g., $W_1$ and $W_2$), the model uses a matrix $W$ for the first transformation and its transpose ($W^T$) for the second transformation. 
+
+## Method
+
+The method replaces distinct weight matrices with a single shared matrix in both Transformer and Convolutional layers.
+
+### 1. Vision Transformers (ViT)
+
+The method is applied to the Feed Forward Network (FFN) and Multi-Head Self-Attention (MHSA).
+
+**Feed Forward Network (FFN):**
+A standard FFN uses two distinct matrices ($W_1, W_2$). HaLViT performs the operation using a single matrix $W$:
+1.  **First Projection:** Multiply input $x$ by $W$.
+2.  **Activation:** Apply the nonlinear function $\mathcal{F}$ (e.g., GELU/ReLU).
+3.  **Second Projection:** Multiply the result by the transpose of $W$ ($W^T$).
+
+**Equation:**
+$$FFN(x) = W^T \mathcal{F}(Wx + b_1) + b_2$$
+
+**Multi-Head Attention (MHA):**
+Standard MHA uses three separate matrices for Queries ($W_q$), Keys ($W_k$), and Values ($W_v$). HaLViT reduces this to two matrices:
+1.  **Query:** Uses a separate matrix $W_q$.
+2.  **Key and Value:** Uses a shared matrix $W_{kv}$.
+    * Keys are generated using $W_{kv}x$.
+    * Values are generated using the transpose $W_{kv}^T x$.
+3.  **Final Projection:** The final output is projected using $W_q^T$.
+
+**Equation:**
+$$\hat{x} = MHA(W_q x, W_{kv} x, W_{kv}^T x)$$
+$$Proj(\hat{x}) = W_q^T \hat{x}$$
+
+### 2. Convolutional Neural Networks (CNNs)
+
+The method is applied to **Bottleneck layers**, commonly found in ResNet architectures.
+
+**Bottleneck Layer Optimization:**
+* **Standard Bottleneck:** A traditional bottleneck block uses two independent weight matrices ($W_1$ and $W_2$) for the $1 \times 1$ convolutions that reduce and expand dimensions.
+* **HaLViT Bottleneck:** We use a single weight matrix $W$ for both operations.
+    1.  The first $1 \times 1$ convolution uses $W$.
+    2.  The intermediate $3 \times 3$ convolution and activation ($\mathcal{G}$) are applied.
+    3.  The final $1 \times 1$ convolution uses the transpose $W^T$.
+
+**Equation:**
+$$Bottleneck(x) = W^T \mathcal{G}(Wx)$$
+
+**Weight Sharing Strategy:**
+To further reduce parameters in ResNets, HaLViT shares these weights across multiple bottleneck layers within the same stage.
+$$Bottleneck(x_n) = W^T \mathcal{G}_n(Wx_n) + x_n$$
+
+## Performance Results
+
+### Vision Transformers (ViT)
+Evaluation performed on ImageNet-1k (Classification) and COCO (Object Detection).
+
+* **ImageNet-1k Classification:**
+    * **HaLViT-Tiny (300 epochs):** 11.1M parameters, **77.3%** Top-1 Accuracy.
+    * **HaLViT-Tiny (600 epochs):** 11.1M parameters, **78.8%** Top-1 Accuracy.
+    * **HaLViT-Small:** 43.0M parameters, **81.3%** Top-1 Accuracy.
+    * *Comparison:* HaLViT-M matches the performance of ViT-Small/16 (80.8%) but with fewer parameters (43M vs 48.8M).
+
+* **COCO Object Detection (Mask R-CNN):**
+    * **HaLViT-T:** 30.8M parameters, **35.3** Box AP.
+    * **HaLViT-M:** 63.0M parameters, **42.3** Box AP.
+    * *Comparison:* HaLViT-M outperforms PVT-M (42.0 Box AP) while using fewer parameters.
+
+### Convolutional Neural Networks (CNN)
+Evaluation performed on ImageNet-1k using the ResNet50 architecture.
+
+* **ImageNet-1k Classification:**
+    * **ResNet50 (HaLViT):** 13.4M parameters, **75.1%** Top-1 Accuracy.
+    * **Standard ResNet50:** 25.6M parameters, **76.1%** Top-1 Accuracy.
+    * **Standard ResNet18:** 11.7M parameters, **69.7%** Top-1 Accuracy.
+    * *Observation:* The proposed method allows ResNet50 to operate with a parameter count comparable to ResNet18 (13.4M vs 11.7M) while achieving significantly higher accuracy (75.1% vs 69.7%).
 
 ## Acknowledgments
 
 This work was supported by:
-* The Scientific and Technological Research Council of Türkiye (TUBITAK) with 1515 Frontier R&D Laboratories Support Program for BTS Advanced AI Hub.
-* Scientific Research Projects Coordination Department (BAP), Istanbul Technical University.
+* The Scientific and Technological Research Council of Türkiye (TUBITAK) - Project 121E378.
+* Istanbul Technical University (ITU) Scientific Research Projects (BAP) - Projects ITU-BAP MGA-2024-45372 and HIZDEP.
 * National Center for High Performance Computing (UHEM).
-
-## Citation
-
-```bibtex
-@InProceedings{Koyun_2024_CVPR,
-    author    = {Koyun, Onur Can and T\"oreyin, Beh\c{c}et U\u{g}ur},
-    title     = {HaLViT: Half of the Weights are Enough},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
-    month     = {June},
-    year      = {2024},
-    pages     = {3669-3678}
-}
