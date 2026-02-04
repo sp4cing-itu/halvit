@@ -10,23 +10,23 @@ Deep learning architectures, such as Transformers and Convolutional Neural Netwo
 
 In this research, we propose a strategy that focuses on the utilization of the column and row spaces of weight matrices. This approach significantly reduces the number of required model parameters without substantially affecting performance. The technique is applied to both Bottleneck layers (in ResNets) and Attention layers (in Vision Transformers), achieving a notable reduction in parameters with minimal impact on model efficacy.
 
-The proposed model, HaLViT, exemplifies a parameter-efficient Vision Transformer. Through rigorous experiments on the ImageNet dataset and COCO dataset, HaLViT's performance validates the effectiveness of the method, offering results comparable to those of conventional models while using significantly fewer parameters.
-
 ## Method Application
 
-The core of our method leverages the row and column spaces of weight matrices to utilize them independently in each layer. We apply this concept distinctively to Transformers and CNNs.
+The main idea behind our method is simple: **Reuse the weights.**
+
+In standard deep learning models, layers typically use separate, distinct weight matrices for every step. We discovered that we can use a single weight matrix ($W$) for the first operation, and then reuse its transpose ($W^T$) for the subsequent operation. Because these steps are separated by a non-linear activation function, the model learns effectively while cutting the number of parameters in half.
 
 ### HaLViT Transformer
-In Vision Transformers (ViTs), our approach effectively reduces the parameter count by half by redefining the standard layers:
+We apply this "recycling" logic to the two most parameter-heavy parts of a Vision Transformer:
 
-* **Multi-Head Attention (MHA):** Instead of using separate matrices for queries, keys, and values, we project the input feature vector using a shared matrix for keys and values ($W_{kv}$) and a separate matrix for queries ($W_{q}$). By utilizing both the matrix and its transpose, we significantly reduce the number of parameters.
-* **Feed Forward Network (FFN):** Traditional FFNs use two distinct weight matrices. Our approach leverages the column space and row space of a single weight matrix $W$. The operation is defined as $FFN(x)=W^{T}\mathcal{F}(Wx+b_{1})+b_{2}$, effectively halving the parameters in this block.
+* **Feed Forward Network (FFN):** A standard FFN normally requires two separate big matrices (one to expand the features, one to reduce them back). We replace these with just **one matrix**. We use $W$ to expand, and reuse $W^T$ to reduce.
+* **Multi-Head Attention (MHA):** We merge the weights used for attention. Instead of separate matrices for everything, Keys and Values share a single matrix ($W_{kv}$). Queries use a separate matrix ($W_q$), but we reuse $W_q$ (transposed) again for the final output projection.
 
 ### HaLViT CNN (ResNet)
-We implement the method in the Bottleneck layers of Residual Networks (ResNets) to increase network efficiency:
+We apply the same concept to Convolutional Neural Networks, specifically the "Bottleneck" blocks in ResNet:
 
-* **Bottleneck Layer:** The proposed bottleneck operation uses the weight matrix $W$ and its transpose $W^T$ for the $1\times1$ convolutions, wrapping the central processing layers.
-* **Weight Sharing Strategy:** To further decrease the parameter count without compromising performance, we adopted a strategy of weight sharing across the bottleneck layers within the same stage of the ResNet architecture.
+* **Reusing Weights:** Inside a bottleneck block, we use matrix $W$ for the first convolution layer and $W^T$ for the last convolution layer.
+* **Sharing Across Blocks:** We adopt a strategy of weight sharing where the same set of parameters is reused across multiple bottleneck blocks within the same stage of the network to decrease the parameter count.
 
 ## Authors and Affiliation
 
