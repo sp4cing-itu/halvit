@@ -27,14 +27,3 @@ This work was supported by:
 * The Scientific and Technological Research Council of Türkiye (TUBITAK) - Project 121E378.
 * Istanbul Technical University (ITU) Scientific Research Projects (BAP).
 * National Center for High Performance Computing (UHEM).
-
-## For Citation
-
-@InProceedings{Koyun_2024_CVPR,
-    author    = {Koyun, Onur Can and T\"oreyin, Beh\c{c}et U\u{g}ur},
-    title     = {HaLViT: Half of the Weights are Enough},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
-    month     = {June},
-    year      = {2024},
-    pages     = {3669-3678}
-}
